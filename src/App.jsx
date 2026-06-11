@@ -16,6 +16,7 @@ function App() {
     const savedMode = localStorage.getItem('darkMode');
     return savedMode === 'true';
   });
+  const [error, setError] = useState('');
 
   // STEP 2: Tasks maarumbol localStorage il save cheyyum
   useEffect(() => {
@@ -29,7 +30,12 @@ function App() {
 
   const addTask = (e) => {
     e.preventDefault();
-    if (input.trim() === '') return;
+    if (input.trim() === '') {
+      setError('⚠️ Please enter a task first!');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+    setError('');
     setTasks([...tasks, { id: Date.now(), text: input, completed: false }]);
     setInput('');
   };
@@ -97,7 +103,25 @@ function App() {
         <div style={{ textAlign: 'center', marginBottom: '24px', fontSize: '20px', color: '#93c5fd' }}>
           {activeTasks} tasks left
         </div>
+        <div style={{ textAlign: 'center', marginBottom: '24px', fontSize: '20px', color: '#93c5fd' }}>
+          {activeTasks} tasks left
+        </div>
 
+        {error && (
+          <div style={{
+            color: '#ff4d4f',
+            background: 'rgba(255, 77, 79, 0.15)',
+            padding: '10px 16px',
+            borderRadius: '6px',
+            marginBottom: '16px',
+            textAlign: 'center',
+            fontSize: '15px',
+            fontWeight: '500',
+            backdropFilter: 'blur(10px)'
+          }}>
+            {error}
+          </div>
+        )}
         <form onSubmit={addTask} style={{ display: 'flex', gap: '8px', marginBottom: '24px', justifyContent: 'center' }}>
           <input
             type="text"
