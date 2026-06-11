@@ -103,9 +103,6 @@ function App() {
         <div style={{ textAlign: 'center', marginBottom: '24px', fontSize: '20px', color: '#93c5fd' }}>
           {activeTasks} tasks left
         </div>
-        <div style={{ textAlign: 'center', marginBottom: '24px', fontSize: '20px', color: '#93c5fd' }}>
-          {activeTasks} tasks left
-        </div>
 
         {error && (
           <div style={{
