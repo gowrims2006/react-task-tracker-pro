@@ -1,16 +1,10 @@
 import { useState } from 'react';
 import { useTasks } from '../hooks/useTasks';
 import TaskForm from './TaskForm';
-const addTask = () => {
-    if (!task || task.trim() === "") {
-        alert("Task enter cheyyu!");
-        return;
-    }
 
-}
 const ApiTasks = () => {
     const { tasks, loading, error, addTask, deleteTask, toggleComplete } = useTasks();
-    const [darkMode, setDarkMode] = useState(true); // ✅ DEFAULT DARK MODE
+    const [darkMode, setDarkMode] = useState(true);
     const [filter, setFilter] = useState('All');
 
     const completedCount = tasks.filter(t => t.completed).length;
