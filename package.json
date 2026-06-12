@@ -1,9 +1,8 @@
 {
-  "name": "student-task-tracker",
+  "name": "react-task-tracker-pro",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
-  "homepage": "https://gowrims2006.github.io/student-task-tracker",
+  "homepage": "https://gowrims2006.github.io/react-task-tracker-pro",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
