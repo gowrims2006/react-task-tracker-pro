@@ -9,6 +9,10 @@ function App() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
+    // NEW: Delete Modal States
+    const [showModal, setShowModal] = useState(false)
+    const [taskToDelete, setTaskToDelete] = useState(null)
+
     const API_URL = 'https://jsonplaceholder.typicode.com/todos'
 
     // Load theme from localStorage
@@ -119,17 +123,33 @@ function App() {
         }
     }
 
-    // DELETE - Delete task
-    const deleteTask = async (id) => {
+    // NEW: Show delete confirmation popup
+    const handleDeleteClick = (id) => {
+        setTaskToDelete(id)
+        setShowModal(true)
+    }
+
+    // NEW: Confirm delete - API DELETE call
+    const confirmDelete = async () => {
         try {
-            await fetch(`${API_URL}/${id}`, {
+            await fetch(`${API_URL}/${taskToDelete}`, {
                 method: 'DELETE'
             })
-            setTasks(tasks.filter(task => task.id !== id))
+            setTasks(tasks.filter(task => task.id !== taskToDelete))
+            setShowModal(false)
+            setTaskToDelete(null)
         } catch (error) {
             console.error('Delete error:', error)
             setError('Failed to delete task')
+            setShowModal(false)
+            setTaskToDelete(null)
         }
+    }
+
+    // NEW: Cancel delete
+    const cancelDelete = () => {
+        setShowModal(false)
+        setTaskToDelete(null)
     }
 
     // Toggle theme
@@ -235,7 +255,7 @@ function App() {
                                         onChange={() => toggleTask(task.id)}
                                     />
                                     <span>{task.text}</span>
-                                    <button className="delete-btn" onClick={() => deleteTask(task.id)}>
+                                    <button className="delete-btn" onClick={() => handleDeleteClick(task.id)}>
                                         Delete
                                     </button>
                                 </div>
@@ -244,6 +264,20 @@ function App() {
                     </div>
                 )}
             </div>
+
+            {/* DELETE CONFIRMATION MODAL */}
+            {showModal && (
+                <div className="modal-overlay" onClick={cancelDelete}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <h3>Warning</h3>
+                        <p>Are you sure you want to delete this task?</p>
+                        <div className="modal-buttons">
+                            <button onClick={cancelDelete} className="cancel-btn">No, Cancel</button>
+                            <button onClick={confirmDelete} className="delete-confirm-btn">Yes, Delete</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
