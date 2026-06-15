@@ -1,19 +1,26 @@
-const API_URL = 'https://jsonplaceholder.typicode.com/todos';
 
-// Part 1: GET - Tasks fetch cheyyan
+const BASE_URL = 'https://jsonplaceholder.typicode.com';
+
 export const getTasks = async () => {
-    const response = await fetch(API_URL + '?_limit=10');
-    if (!response.ok) throw new Error('Failed to fetch tasks');
-    return response.json();
+    const res = await fetch(`${BASE_URL}/todos?_limit=10`);
+    if (!res.ok) throw new Error('Failed to fetch tasks');
+    return await res.json();
 };
 
-// Part 4: POST - Puthiya task add cheyyan  
 export const createTask = async (taskData) => {
-    const response = await fetch(API_URL, {
+    const res = await fetch(`${BASE_URL}/posts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(taskData),
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            title: taskData.title,
+            body: taskData.description || 'No description',
+            userId: 1,
+            completed: taskData.completed || false
+        })
     });
-    if (!response.ok) throw new Error('Failed to create task');
-    return response.json();
+
+    if (!res.ok) throw new Error('Failed to create task');
+    return await res.json();
 };
