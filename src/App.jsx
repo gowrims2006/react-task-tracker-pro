@@ -9,12 +9,15 @@ function App() {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [isDark, setIsDark] = useState(false);
 
+    // ✅ THEME ONCE MATHRAM DECLARE CHEYYU
     const theme = {
-        inputBg: '#1c1c1e',
-        text: '#fff',
-        border: '#38383a',
-        blue: '#0a84ff'
+        inputBg: isDark ? '#1c1c1e' : '#fff',
+        text: isDark ? '#fff' : '#000',
+        border: isDark ? '#38383a' : '#dee2e6',
+        blue: '#0a84ff',
+        bg: isDark ? '#000' : '#fff'
     };
 
     // 1. GET API
@@ -37,7 +40,6 @@ function App() {
         setTasks(prev => [newTaskObj, ...prev]);
     };
 
-    // ✅ '/' KALANJU. INI SHERI AAYI
     const handleToggle = (id) => {
         setTasks(tasks.map(task =>
             task.id === id ? { ...task, completed: !task.completed } : task
@@ -57,30 +59,41 @@ function App() {
 
     // ✅ RETURN STATEMENT - JSX STARTS HERE
     return (
-        <div className="container mt-4" style={{ maxWidth: '800px' }}>
-            <h1 className="text-center mb-4">Student Task Tracker</h1>
+        <div style={{ backgroundColor: theme.bg, color: theme.text, minHeight: '100vh' }}>
+            <div className="container pt-4" style={{ maxWidth: '800px' }}>
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                    <h1 className="mb-0">Student Task Tracker</h1>
+                    <button
+                        className="btn btn-outline-primary"
+                        onClick={() => setIsDark(!isDark)}
+                    >
+                        {isDark ? '☀️ Light' : '🌙 Dark'}
+                    </button>
+                </div>
 
-            <div className="row mb-4">
-                <div className="col-md-4">
-                    <StatsCard title="Total Tasks" count={tasks.length} />
+                <div className="row mb-4">
+                    <div className="col-md-4">
+                        <StatsCard title="Total Tasks" count={tasks.length} theme={theme} />
+                    </div>
+                    <div className="col-md-4">
+                        <StatsCard title="Completed" count={completedTasks} theme={theme} />
+                    </div>
+                    <div className="col-md-4">
+                        <StatsCard title="Pending" count={pendingTasks} theme={theme} />
+                    </div>
                 </div>
-                <div className="col-md-4">
-                    <StatsCard title="Completed" count={completedTasks} />
-                </div>
-                <div className="col-md-4">
-                    <StatsCard title="Pending" count={pendingTasks} />
-                </div>
+
+                <TaskForm onSubmit={handleAddTask} theme={theme} />
+
+                <TaskList
+                    tasks={tasks}
+                    toggleTask={handleToggle}
+                    deleteTask={handleDelete}
+                    theme={theme}
+                />
             </div>
-
-            <TaskForm onSubmit={handleAddTask} theme={theme} />
-
-            <TaskList
-                tasks={tasks}
-                toggleTask={handleToggle}
-                deleteTask={handleDelete}
-            />
         </div>
-    ); // ✅ RETURN ENDS HERE
-} // ✅ FUNCTION ENDS HERE
+    );
+}
 
 export default App;
