@@ -7,8 +7,15 @@ function App() {
     const [filter, setFilter] = useState('all')
     const [darkMode, setDarkMode] = useState(true)
     const [loading, setLoading] = useState(false)
+    const [error, setError] = useState('')
 
     const API_URL = 'https://jsonplaceholder.typicode.com/todos'
+
+    // Load theme from localStorage
+    useEffect(() => {
+        const savedTheme = localStorage.getItem('darkMode')
+        if (savedTheme) setDarkMode(JSON.parse(savedTheme))
+    }, [])
 
     // GET - Load tasks from API
     useEffect(() => {
@@ -25,7 +32,7 @@ function App() {
                 setTasks(formattedTasks)
             } catch (error) {
                 console.error('Fetch error:', error)
-                alert('API load cheyyan pattiyilla')
+                setError('Failed to load tasks from API')
             } finally {
                 setLoading(false)
             }
@@ -33,10 +40,30 @@ function App() {
         fetchTasks()
     }, [])
 
-    // POST - Add task to API
+    // POST - Add task with VALIDATION
     const addTask = async () => {
-        if (input.trim() === '') return
+        // VALIDATION 1: Empty check
+        if (input.trim() === '') {
+            setError('Please enter a task! 📝')
+            return
+        }
 
+        // VALIDATION 2: Min length
+        if (input.trim().length < 3) {
+            setError('Task must be at least 3 characters long!')
+            return
+        }
+
+        // VALIDATION 3: Duplicate check
+        const isDuplicate = tasks.some(task =>
+            task.text.toLowerCase() === input.trim().toLowerCase()
+        )
+        if (isDuplicate) {
+            setError('This task already exists! 🔄')
+            return
+        }
+
+        setError('')
         setLoading(true)
         try {
             const response = await fetch(API_URL, {
@@ -45,7 +72,7 @@ function App() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    title: input,
+                    title: input.trim(),
                     completed: false,
                     userId: 1
                 })
@@ -53,20 +80,20 @@ function App() {
 
             const newTask = await response.json()
             setTasks([...tasks, {
-                id: newTask.id,
-                text: newTask.title || input,
-                completed: newTask.completed
+                id: newTask.id || Date.now(),
+                text: input.trim(),
+                completed: false
             }])
             setInput('')
         } catch (error) {
             console.error('Add error:', error)
-            alert('Task add cheyyan pattiyilla')
+            setError('Failed to add task. Try again!')
         } finally {
             setLoading(false)
         }
     }
 
-    // PUT - Toggle complete with API
+    // PUT - Toggle complete
     const toggleTask = async (id) => {
         const task = tasks.find(t => t.id === id)
         if (!task) return
@@ -88,11 +115,11 @@ function App() {
             ))
         } catch (error) {
             console.error('Update error:', error)
-            alert('Update cheyyan pattiyilla')
+            setError('Failed to update task')
         }
     }
 
-    // DELETE - Delete from API
+    // DELETE - Delete task
     const deleteTask = async (id) => {
         try {
             await fetch(`${API_URL}/${id}`, {
@@ -101,7 +128,7 @@ function App() {
             setTasks(tasks.filter(task => task.id !== id))
         } catch (error) {
             console.error('Delete error:', error)
-            alert('Delete cheyyan pattiyilla')
+            setError('Failed to delete task')
         }
     }
 
@@ -110,11 +137,6 @@ function App() {
         setDarkMode(!darkMode)
         localStorage.setItem('darkMode', JSON.stringify(!darkMode))
     }
-
-    useEffect(() => {
-        const savedTheme = localStorage.getItem('darkMode')
-        if (savedTheme) setDarkMode(JSON.parse(savedTheme))
-    }, [])
 
     // Filter logic
     const filteredTasks = tasks.filter(task => {
@@ -131,6 +153,7 @@ function App() {
     return (
         <div className={`app ${darkMode ? 'dark' : 'light'}`}>
             <div className="container">
+                {/* Header */}
                 <div className="header">
                     <h1>Student Task Tracker</h1>
                     <button className="theme-toggle" onClick={toggleTheme}>
@@ -138,6 +161,7 @@ function App() {
                     </button>
                 </div>
 
+                {/* Stats Cards */}
                 <div className="stats">
                     <div className="stat-card">
                         <p>Total Tasks</p>
@@ -153,20 +177,27 @@ function App() {
                     </div>
                 </div>
 
+                {/* Input */}
                 <div className="input-section">
                     <input
                         type="text"
                         value={input}
-                        onChange={(e) => setInput(e.target.value)}
+                        onChange={(e) => {
+                            setInput(e.target.value)
+                            setError('')
+                        }}
                         onKeyDown={(e) => e.key === 'Enter' && addTask()}
                         placeholder="Enter task"
                         disabled={loading}
+                        className={error ? 'error' : ''}
                     />
                     <button onClick={addTask} disabled={loading}>
                         {loading ? 'Adding...' : 'Add Task'}
                     </button>
                 </div>
+                {error && <p className="error-text">{error}</p>}
 
+                {/* Filters */}
                 <div className="filters">
                     <button
                         className={filter === 'all' ? 'active' : ''}
@@ -188,6 +219,7 @@ function App() {
                     </button>
                 </div>
 
+                {/* Task List */}
                 {loading && tasks.length === 0 ? (
                     <p className="empty">Loading tasks... ⏳</p>
                 ) : (
