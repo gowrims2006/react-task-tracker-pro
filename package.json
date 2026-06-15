@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "predeploy": "npm run build",
+    "predeploy": "vite build --base=/react-task-tracker-pro/",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
