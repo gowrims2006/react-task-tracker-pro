@@ -1,99 +1,141 @@
-import { useState, useEffect } from 'react';
-import { getTasks } from './services/api';
-import TaskForm from './components/TaskForm';
-import TaskList from './components/TaskList';
-import StatsCard from './components/StatsCard';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import { useState, useEffect } from 'react'
+import './App.css'
 
 function App() {
-    const [tasks, setTasks] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [isDark, setIsDark] = useState(false);
+    const [tasks, setTasks] = useState([])
+    const [input, setInput] = useState('')
+    const [filter, setFilter] = useState('all') // all, pending, completed
+    const [darkMode, setDarkMode] = useState(true)
 
-    // ✅ THEME ONCE MATHRAM DECLARE CHEYYU
-    const theme = {
-        inputBg: isDark ? '#1c1c1e' : '#fff',
-        text: isDark ? '#fff' : '#000',
-        border: isDark ? '#38383a' : '#dee2e6',
-        blue: '#0a84ff',
-        bg: isDark ? '#000' : '#fff'
-    };
-
-    // 1. GET API
+    // Load from localStorage
     useEffect(() => {
-        const fetchTasks = async () => {
-            try {
-                const data = await getTasks();
-                setTasks(data);
-            } catch (err) {
-                setError('Failed to load tasks');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchTasks();
-    }, []);
+        const savedTasks = localStorage.getItem('tasks')
+        const savedTheme = localStorage.getItem('darkMode')
+        if (savedTasks) setTasks(JSON.parse(savedTasks))
+        if (savedTheme) setDarkMode(JSON.parse(savedTheme))
+    }, [])
 
-    // 2. POST API - TaskForm il ninnu
-    const handleAddTask = (newTaskObj) => {
-        setTasks(prev => [newTaskObj, ...prev]);
-    };
+    // Save to localStorage
+    useEffect(() => {
+        localStorage.setItem('tasks', JSON.stringify(tasks))
+        localStorage.setItem('darkMode', JSON.stringify(darkMode))
+    }, [tasks, darkMode])
 
-    const handleToggle = (id) => {
+    // Add task
+    const addTask = () => {
+        if (input.trim() === '') return
+        setTasks([...tasks, { id: Date.now(), text: input, completed: false }])
+        setInput('')
+    }
+
+    // Toggle complete
+    const toggleTask = (id) => {
         setTasks(tasks.map(task =>
             task.id === id ? { ...task, completed: !task.completed } : task
-        ));
-    };
+        ))
+    }
 
-    const handleDelete = (id) => {
-        setTasks(tasks.filter(task => task.id !== id));
-    };
+    // Delete task
+    const deleteTask = (id) => {
+        setTasks(tasks.filter(task => task.id !== id))
+    }
 
-    // 5. Stats calculate
-    const completedTasks = tasks.filter(t => t.completed).length;
-    const pendingTasks = tasks.length - completedTasks;
+    // Filter logic
+    const filteredTasks = tasks.filter(task => {
+        if (filter === 'completed') return task.completed
+        if (filter === 'pending') return !task.completed
+        return true
+    })
 
-    if (loading) return <div className="text-center mt-5">Loading...</div>;
-    if (error) return <div className="text-center mt-5 text-danger">{error}</div>;
+    // Stats
+    const totalTasks = tasks.length
+    const completedTasks = tasks.filter(t => t.completed).length
+    const pendingTasks = tasks.filter(t => !t.completed).length
 
-    // ✅ RETURN STATEMENT - JSX STARTS HERE
     return (
-        <div style={{ backgroundColor: theme.bg, color: theme.text, minHeight: '100vh' }}>
-            <div className="container pt-4" style={{ maxWidth: '800px' }}>
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                    <h1 className="mb-0">Student Task Tracker</h1>
-                    <button
-                        className="btn btn-outline-primary"
-                        onClick={() => setIsDark(!isDark)}
-                    >
-                        {isDark ? '☀️ Light' : '🌙 Dark'}
+        <div className={`app ${darkMode ? 'dark' : 'light'}`}>
+            <div className="container">
+                {/* Header */}
+                <div className="header">
+                    <h1>Student Task Tracker</h1>
+                    <button className="theme-toggle" onClick={() => setDarkMode(!darkMode)}>
+                        {darkMode ? '☀️ Light' : '🌙 Dark'}
                     </button>
                 </div>
 
-                <div className="row mb-4">
-                    <div className="col-md-4">
-                        <StatsCard title="Total Tasks" count={tasks.length} theme={theme} />
+                {/* Stats Cards */}
+                <div className="stats">
+                    <div className="stat-card">
+                        <p>Total Tasks</p>
+                        <h2>{totalTasks}</h2>
                     </div>
-                    <div className="col-md-4">
-                        <StatsCard title="Completed" count={completedTasks} theme={theme} />
+                    <div className="stat-card">
+                        <p>Completed</p>
+                        <h2>{completedTasks}</h2>
                     </div>
-                    <div className="col-md-4">
-                        <StatsCard title="Pending" count={pendingTasks} theme={theme} />
+                    <div className="stat-card">
+                        <p>Pending</p>
+                        <h2>{pendingTasks}</h2>
                     </div>
                 </div>
 
-                <TaskForm onSubmit={handleAddTask} theme={theme} />
+                {/* Input */}
+                <div className="input-section">
+                    <input
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && addTask()}
+                        placeholder="Enter task"
+                    />
+                    <button onClick={addTask}>Add Task</button>
+                </div>
 
-                <TaskList
-                    tasks={tasks}
-                    toggleTask={handleToggle}
-                    deleteTask={handleDelete}
-                    theme={theme}
-                />
+                {/* Filters - ITHAANU NEE CHODICHA ADDITIONAL FILTER */}
+                <div className="filters">
+                    <button
+                        className={filter === 'all' ? 'active' : ''}
+                        onClick={() => setFilter('all')}
+                    >
+                        All ({totalTasks})
+                    </button>
+                    <button
+                        className={filter === 'pending' ? 'active' : ''}
+                        onClick={() => setFilter('pending')}
+                    >
+                        Pending ({pendingTasks})
+                    </button>
+                    <button
+                        className={filter === 'completed' ? 'active' : ''}
+                        onClick={() => setFilter('completed')}
+                    >
+                        Completed ({completedTasks})
+                    </button>
+                </div>
+
+                {/* Task List */}
+                <div className="task-list">
+                    {filteredTasks.length === 0 ? (
+                        <p className="empty">No tasks found 🔍</p>
+                    ) : (
+                        filteredTasks.map(task => (
+                            <div key={task.id} className={`task ${task.completed ? 'done' : ''}`}>
+                                <input
+                                    type="checkbox"
+                                    checked={task.completed}
+                                    onChange={() => toggleTask(task.id)}
+                                />
+                                <span>{task.text}</span>
+                                <button className="delete-btn" onClick={() => deleteTask(task.id)}>
+                                    Delete
+                                </button>
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
         </div>
-    );
+    )
 }
 
-export default App;
+export default App
