@@ -66,7 +66,11 @@ function App() {
             <TaskForm onSubmit={handleAddTask} theme={theme} />
 
             {/* TaskList - tasks display cheyyan */}
-            <TaskList tasks={tasks} />
+            <TaskList
+                tasks={tasks}
+                toggleTask={handleToggle}
+                deleteTask={handleDelete}
+            />
         </div>
     );
 }
