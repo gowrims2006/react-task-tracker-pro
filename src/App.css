@@ -26,7 +26,7 @@
   padding: 40px 20px;
 }
 
-/* Header */
+/* Header - FIXED */
 .header {
   display: flex;
   justify-content: space-between;
@@ -37,6 +37,11 @@
 .header h1 {
   font-size: 32px;
   font-weight: 700;
+  color: white;
+}
+
+.app.light .header h1 {
+  color: #1e293b;
 }
 
 .theme-toggle {
@@ -54,6 +59,11 @@
   border-color: #60a5fa;
 }
 
+.app.light .theme-toggle {
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
 /* Stats Cards */
 .stats {
   display: grid;
@@ -67,17 +77,23 @@
   padding: 20px;
   border-radius: 12px;
   text-align: center;
+  border: 1px solid #2a2a2a;
 }
 
 .app.light .stat-card {
   background: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
 }
 
 .stat-card p {
   font-size: 14px;
   color: #94a3b8;
   margin-bottom: 8px;
+}
+
+.app.light .stat-card p {
+  color: #64748b;
 }
 
 .stat-card h2 {
@@ -96,7 +112,7 @@
 .input-section input {
   flex: 1;
   padding: 14px;
-  border: none;
+  border: 2px solid #2a2a2a;
   border-radius: 8px;
   font-size: 16px;
   background: #1a1a1a;
@@ -107,6 +123,10 @@
   background: white;
   color: #1e293b;
   border: 2px solid #e2e8f0;
+}
+
+.input-section input::placeholder {
+  color: #64748b;
 }
 
 .input-section button {
@@ -122,6 +142,11 @@
 
 .input-section button:hover {
   background: #2563eb;
+}
+
+.input-section button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Filters */
@@ -171,14 +196,17 @@
   align-items: center;
   gap: 12px;
   padding: 16px;
-  background: white;
+  background: #1a1a1a;
   border-radius: 8px;
-  color: #1e293b;
+  color: white;
+  border: 1px solid #2a2a2a;
 }
 
-.app.dark .task {
-  background: #1a1a1a;
-  color: white;
+.app.light .task {
+  background: white;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .task.done span {
@@ -190,6 +218,7 @@
   width: 20px;
   height: 20px;
   cursor: pointer;
+  accent-color: #3b82f6;
 }
 
 .task span {

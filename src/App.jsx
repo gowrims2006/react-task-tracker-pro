@@ -4,41 +4,117 @@ import './App.css'
 function App() {
     const [tasks, setTasks] = useState([])
     const [input, setInput] = useState('')
-    const [filter, setFilter] = useState('all') // all, pending, completed
+    const [filter, setFilter] = useState('all')
     const [darkMode, setDarkMode] = useState(true)
+    const [loading, setLoading] = useState(false)
 
-    // Load from localStorage
+    const API_URL = 'https://jsonplaceholder.typicode.com/todos'
+
+    // GET - Load tasks from API
     useEffect(() => {
-        const savedTasks = localStorage.getItem('tasks')
-        const savedTheme = localStorage.getItem('darkMode')
-        if (savedTasks) setTasks(JSON.parse(savedTasks))
-        if (savedTheme) setDarkMode(JSON.parse(savedTheme))
+        const fetchTasks = async () => {
+            setLoading(true)
+            try {
+                const response = await fetch(`${API_URL}?_limit=10`)
+                const data = await response.json()
+                const formattedTasks = data.map(t => ({
+                    id: t.id,
+                    text: t.title,
+                    completed: t.completed
+                }))
+                setTasks(formattedTasks)
+            } catch (error) {
+                console.error('Fetch error:', error)
+                alert('API load cheyyan pattiyilla')
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchTasks()
     }, [])
 
-    // Save to localStorage
-    useEffect(() => {
-        localStorage.setItem('tasks', JSON.stringify(tasks))
-        localStorage.setItem('darkMode', JSON.stringify(darkMode))
-    }, [tasks, darkMode])
-
-    // Add task
-    const addTask = () => {
+    // POST - Add task to API
+    const addTask = async () => {
         if (input.trim() === '') return
-        setTasks([...tasks, { id: Date.now(), text: input, completed: false }])
-        setInput('')
+
+        setLoading(true)
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: input,
+                    completed: false,
+                    userId: 1
+                })
+            })
+
+            const newTask = await response.json()
+            setTasks([...tasks, {
+                id: newTask.id,
+                text: newTask.title || input,
+                completed: newTask.completed
+            }])
+            setInput('')
+        } catch (error) {
+            console.error('Add error:', error)
+            alert('Task add cheyyan pattiyilla')
+        } finally {
+            setLoading(false)
+        }
     }
 
-    // Toggle complete
-    const toggleTask = (id) => {
-        setTasks(tasks.map(task =>
-            task.id === id ? { ...task, completed: !task.completed } : task
-        ))
+    // PUT - Toggle complete with API
+    const toggleTask = async (id) => {
+        const task = tasks.find(t => t.id === id)
+        if (!task) return
+
+        try {
+            await fetch(`${API_URL}/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ...task,
+                    completed: !task.completed
+                })
+            })
+
+            setTasks(tasks.map(t =>
+                t.id === id ? { ...t, completed: !t.completed } : t
+            ))
+        } catch (error) {
+            console.error('Update error:', error)
+            alert('Update cheyyan pattiyilla')
+        }
     }
 
-    // Delete task
-    const deleteTask = (id) => {
-        setTasks(tasks.filter(task => task.id !== id))
+    // DELETE - Delete from API
+    const deleteTask = async (id) => {
+        try {
+            await fetch(`${API_URL}/${id}`, {
+                method: 'DELETE'
+            })
+            setTasks(tasks.filter(task => task.id !== id))
+        } catch (error) {
+            console.error('Delete error:', error)
+            alert('Delete cheyyan pattiyilla')
+        }
     }
+
+    // Toggle theme
+    const toggleTheme = () => {
+        setDarkMode(!darkMode)
+        localStorage.setItem('darkMode', JSON.stringify(!darkMode))
+    }
+
+    useEffect(() => {
+        const savedTheme = localStorage.getItem('darkMode')
+        if (savedTheme) setDarkMode(JSON.parse(savedTheme))
+    }, [])
 
     // Filter logic
     const filteredTasks = tasks.filter(task => {
@@ -55,15 +131,13 @@ function App() {
     return (
         <div className={`app ${darkMode ? 'dark' : 'light'}`}>
             <div className="container">
-                {/* Header */}
                 <div className="header">
                     <h1>Student Task Tracker</h1>
-                    <button className="theme-toggle" onClick={() => setDarkMode(!darkMode)}>
+                    <button className="theme-toggle" onClick={toggleTheme}>
                         {darkMode ? '☀️ Light' : '🌙 Dark'}
                     </button>
                 </div>
 
-                {/* Stats Cards */}
                 <div className="stats">
                     <div className="stat-card">
                         <p>Total Tasks</p>
@@ -79,7 +153,6 @@ function App() {
                     </div>
                 </div>
 
-                {/* Input */}
                 <div className="input-section">
                     <input
                         type="text"
@@ -87,11 +160,13 @@ function App() {
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && addTask()}
                         placeholder="Enter task"
+                        disabled={loading}
                     />
-                    <button onClick={addTask}>Add Task</button>
+                    <button onClick={addTask} disabled={loading}>
+                        {loading ? 'Adding...' : 'Add Task'}
+                    </button>
                 </div>
 
-                {/* Filters - ITHAANU NEE CHODICHA ADDITIONAL FILTER */}
                 <div className="filters">
                     <button
                         className={filter === 'all' ? 'active' : ''}
@@ -113,26 +188,29 @@ function App() {
                     </button>
                 </div>
 
-                {/* Task List */}
-                <div className="task-list">
-                    {filteredTasks.length === 0 ? (
-                        <p className="empty">No tasks found 🔍</p>
-                    ) : (
-                        filteredTasks.map(task => (
-                            <div key={task.id} className={`task ${task.completed ? 'done' : ''}`}>
-                                <input
-                                    type="checkbox"
-                                    checked={task.completed}
-                                    onChange={() => toggleTask(task.id)}
-                                />
-                                <span>{task.text}</span>
-                                <button className="delete-btn" onClick={() => deleteTask(task.id)}>
-                                    Delete
-                                </button>
-                            </div>
-                        ))
-                    )}
-                </div>
+                {loading && tasks.length === 0 ? (
+                    <p className="empty">Loading tasks... ⏳</p>
+                ) : (
+                    <div className="task-list">
+                        {filteredTasks.length === 0 ? (
+                            <p className="empty">No tasks found 🔍</p>
+                        ) : (
+                            filteredTasks.map(task => (
+                                <div key={task.id} className={`task ${task.completed ? 'done' : ''}`}>
+                                    <input
+                                        type="checkbox"
+                                        checked={task.completed}
+                                        onChange={() => toggleTask(task.id)}
+                                    />
+                                    <span>{task.text}</span>
+                                    <button className="delete-btn" onClick={() => deleteTask(task.id)}>
+                                        Delete
+                                    </button>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     )
