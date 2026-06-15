@@ -2,22 +2,18 @@
   "name": "react-task-tracker-pro",
   "private": true,
   "version": "0.0.0",
-  "homepage": "https://gowrims2006.github.io/react-task-tracker-pro",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "predeploy": "vite build --base=/react-task-tracker-pro/",
-    "deploy": "gh-pages -d dist"
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "bootstrap": "^5.3.8",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "vite": "^5.0.8",
+    "@vitejs/plugin-react": "^4.2.1"
   },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.2.1",
-    "gh-pages": "^6.3.0",
-    "vite": "^5.2.0"
-  }
+  "devDependencies": {}
 }
