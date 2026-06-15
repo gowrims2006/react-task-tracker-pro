@@ -1,14 +1,14 @@
 # 🎓 Student Task Tracker - React Internship Assignment
 
 ## 🎥 Project Demo Video - 43 Seconds
-[[▶️ **WATCH FULL DEMO**](https://img.youtube.com/vi/77kMmpkqwSM/maxresdefault.jpg)](https://youtu.be/77kMmpkqwSM)
+[▶️ **WATCH FULL DEMO**](https://youtu.be/77kMmpkqwSM)
 
 **Features Shown:** Add Task → Delete Task → Mark Complete → Filter All/Pending/Completed → Dark Mode Toggle → localStorage Persistence Test
 
 ---
 
 ## 🚀 Live Demo
-**Vercel Deployment:** [ADD YOUR VERCEL LINK HERE]
+**Vercel Deployment:** https://react-task-tracker-pro.vercel.app
 
 ---
 
