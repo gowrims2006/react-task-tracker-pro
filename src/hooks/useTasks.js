@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
-import { getTasks, createTask } from '../services/api';
+import { getTasks, createTask, deleteTaskApi, updateTask } from '../services/api';
 
 export const useTasks = () => {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    // Part 1: GET API + Part 2: Loading State + Part 3: Error Handling
     const fetchTasks = async () => {
         try {
             setLoading(true);
             setError('');
-            const data = await getTasks(); // api.js il ninnu varunnu
+            const data = await getTasks();
             setTasks(data);
         } catch (err) {
             setError(err.message);
@@ -20,42 +19,43 @@ export const useTasks = () => {
         }
     };
 
-    // Part 4: POST API Integration
     const addTask = async (title, completed = false) => {
-        if (!title.trim()) return; // Empty aanel stop
-
+        if (!title.trim()) return;
         try {
             const newTask = await createTask({
                 title,
-                completed,
-                userId: 1
+                completed
             });
-            setTasks(prev => [{ ...newTask, id: Date.now() }, ...prev]);
+            setTasks(prev => [newTask, ...prev]); // Date.now() venda, backend id tharum
             return newTask;
         } catch (err) {
             setError(err.message);
         }
     };
 
-    // Page load aavumbol automatic aayi data edukkan
     useEffect(() => {
         fetchTasks();
     }, []);
+
     const deleteTask = async (id) => {
         try {
-            await fetch(`https://jsonplaceholder.typicode.com/todos/${id}`, {
-                method: 'DELETE'
-            });
+            await deleteTaskApi(id);
             setTasks(prev => prev.filter(task => task.id !== id));
         } catch (err) {
             setError(err.message);
         }
     };
 
-    const toggleComplete = (id) => {
-        setTasks(prev => prev.map(task =>
-            task.id === id ? { ...task, completed: !task.completed } : task
-        ));
+    const toggleComplete = async (id) => {
+        const task = tasks.find(t => t.id === id);
+        try {
+            const updated = await updateTask(id, { ...task, completed: !task.completed });
+            setTasks(prev => prev.map(task =>
+                task.id === id ? updated : task
+            ));
+        } catch (err) {
+            setError(err.message);
+        }
     };
 
     return {
@@ -63,8 +63,8 @@ export const useTasks = () => {
         loading,
         error,
         addTask,
-        deleteTask,      // ✅ ADD CHEYTHU
-        toggleComplete,  // ✅ ADD CHEYTHU
+        deleteTask,
+        toggleComplete,
         refetch: fetchTasks
     };
 };

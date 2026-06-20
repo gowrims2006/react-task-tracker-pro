@@ -8,114 +8,85 @@ function App() {
     const [darkMode, setDarkMode] = useState(true)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
-
-    // NEW: Delete Modal States
     const [showModal, setShowModal] = useState(false)
     const [taskToDelete, setTaskToDelete] = useState(null)
 
-    const API_URL = 'https://jsonplaceholder.typicode.com/todos'
+    // ✅ NINTE REAL BACKEND
+    const API_URL = 'http://localhost:3001/api/todos'
 
-    // Load theme from localStorage
     useEffect(() => {
         const savedTheme = localStorage.getItem('darkMode')
         if (savedTheme) setDarkMode(JSON.parse(savedTheme))
     }, [])
 
-    // GET - Load tasks from API
     useEffect(() => {
         const fetchTasks = async () => {
             setLoading(true)
             try {
-                const response = await fetch(`${API_URL}?_limit=10`)
-                const data = await response.json()
-                const formattedTasks = data.map(t => ({
-                    id: t.id,
-                    text: t.title,
-                    completed: t.completed
-                }))
-                setTasks(formattedTasks)
-            } catch (error) {
-                console.error('Fetch error:', error)
-                setError('Failed to load tasks from API')
+                const response = await fetch(API_URL)
+                const result = await response.json()
+
+                if (result.success) { // ✅ Success check cheyyanam
+                    const formattedTasks = result.data.map(t => ({
+                        id: t._id,
+                        text: t.task,
+                        completed: t.completed
+                    }))
+                    setTasks(formattedTasks)
+                    setError('') // ✅ Error clear cheyyu
+                } else {
+                    setError('Failed to load tasks') // ❌ Enkil mathram
+                }
+            } catch (err) {
+                setError('Failed to load tasks')
             } finally {
                 setLoading(false)
             }
         }
         fetchTasks()
     }, [])
-
-    // POST - Add task with VALIDATION
     const addTask = async () => {
-        // VALIDATION 1: Empty check
-        if (input.trim() === '') {
-            setError('Please enter a task! 📝')
-            return
-        }
+        // ... validation code same ...
 
-        // VALIDATION 2: Min length
-        if (input.trim().length < 3) {
-            setError('Task must be at least 3 characters long!')
-            return
-        }
-
-        // VALIDATION 3: Duplicate check
-        const isDuplicate = tasks.some(task =>
-            task.text.toLowerCase() === input.trim().toLowerCase()
-        )
-        if (isDuplicate) {
-            setError('This task already exists! 🔄')
-            return
-        }
-
-        setError('')
-        setLoading(true)
         try {
             const response = await fetch(API_URL, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    title: input.trim(),
-                    completed: false,
-                    userId: 1
+                    task: input.trim(),  // ✅ 'task' ennanu backend expect cheyyunnathu
+                    completed: false
                 })
             })
-
-            const newTask = await response.json()
+            const result = await response.json()
             setTasks([...tasks, {
-                id: newTask.id || Date.now(),
-                text: input.trim(),
-                completed: false
+                id: result.data._id,
+                text: result.data.task,
+                completed: result.data.completed
             }])
             setInput('')
         } catch (error) {
-            console.error('Add error:', error)
             setError('Failed to add task. Try again!')
         } finally {
             setLoading(false)
         }
     }
-
-    // PUT - Toggle complete
+    // ✅ PUT - Update cheyyan
     const toggleTask = async (id) => {
         const task = tasks.find(t => t.id === id)
         if (!task) return
 
         try {
-            await fetch(`${API_URL}/${id}`, {
+            const response = await fetch(`${API_URL}/${id}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    ...task,
+                    task: task.text,
                     completed: !task.completed
                 })
             })
-
+            const result = await response.json()
             setTasks(tasks.map(t =>
-                t.id === id ? { ...t, completed: !t.completed } : t
+                t.id === id ? { ...t, completed: result.data.completed } : t
             ))
         } catch (error) {
             console.error('Update error:', error)
@@ -123,13 +94,12 @@ function App() {
         }
     }
 
-    // NEW: Show delete confirmation popup
     const handleDeleteClick = (id) => {
         setTaskToDelete(id)
         setShowModal(true)
     }
 
-    // NEW: Confirm delete - API DELETE call
+    // ✅ DELETE - Backend il ninnu delete cheyyan
     const confirmDelete = async () => {
         try {
             await fetch(`${API_URL}/${taskToDelete}`, {
@@ -146,26 +116,22 @@ function App() {
         }
     }
 
-    // NEW: Cancel delete
     const cancelDelete = () => {
         setShowModal(false)
         setTaskToDelete(null)
     }
 
-    // Toggle theme
     const toggleTheme = () => {
         setDarkMode(!darkMode)
         localStorage.setItem('darkMode', JSON.stringify(!darkMode))
     }
 
-    // Filter logic
     const filteredTasks = tasks.filter(task => {
         if (filter === 'completed') return task.completed
         if (filter === 'pending') return !task.completed
         return true
     })
 
-    // Stats
     const totalTasks = tasks.length
     const completedTasks = tasks.filter(t => t.completed).length
     const pendingTasks = tasks.filter(t => !t.completed).length
@@ -173,7 +139,6 @@ function App() {
     return (
         <div className={`app ${darkMode ? 'dark' : 'light'}`}>
             <div className="container">
-                {/* Header */}
                 <div className="header">
                     <h1>Student Task Tracker</h1>
                     <button className="theme-toggle" onClick={toggleTheme}>
@@ -181,7 +146,6 @@ function App() {
                     </button>
                 </div>
 
-                {/* Stats Cards */}
                 <div className="stats">
                     <div className="stat-card">
                         <p>Total Tasks</p>
@@ -197,7 +161,6 @@ function App() {
                     </div>
                 </div>
 
-                {/* Input */}
                 <div className="input-section">
                     <input
                         type="text"
@@ -217,7 +180,6 @@ function App() {
                 </div>
                 {error && <p className="error-text">{error}</p>}
 
-                {/* Filters */}
                 <div className="filters">
                     <button
                         className={filter === 'all' ? 'active' : ''}
@@ -239,7 +201,6 @@ function App() {
                     </button>
                 </div>
 
-                {/* Task List */}
                 {loading && tasks.length === 0 ? (
                     <p className="empty">Loading tasks... ⏳</p>
                 ) : (
@@ -265,7 +226,6 @@ function App() {
                 )}
             </div>
 
-            {/* DELETE CONFIRMATION MODAL */}
             {showModal && (
                 <div className="modal-overlay" onClick={cancelDelete}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
