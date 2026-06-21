@@ -1,43 +1,37 @@
-const BASE_URL = 'https://task-tracker-backend-sbca.onrender.com';
+const TASKS_KEY = 'student_tasks_v3';
 
 export const getTasks = async () => {
-    const res = await fetch(`${BASE_URL}/tasks`);
-    if (!res.ok) throw new Error('Failed to fetch tasks');
-    return await res.json();
+    try {
+        const data = localStorage.getItem(TASKS_KEY);
+        return data ? JSON.parse(data) : [];
+    } catch {
+        return [];
+    }
 };
 
-export const createTask = async (taskData) => {
-    const res = await fetch(`${BASE_URL}/tasks`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            title: taskData.title,
-            completed: taskData.completed || false
-        })
-    });
-
-    if (!res.ok) throw new Error('Failed to create task');
-    return await res.json();
+export const addTask = async (text) => {
+    const tasks = await getTasks();
+    const newTask = {
+        id: Date.now(),
+        text: text.trim(),
+        completed: false
+    };
+    const updated = [...tasks, newTask];
+    localStorage.setItem(TASKS_KEY, JSON.stringify(updated));
+    return newTask;
 };
 
-export const deleteTaskApi = async (id) => {
-    const res = await fetch(`${BASE_URL}/tasks/${id}`, {
-        method: 'DELETE'
-    });
-    if (!res.ok) throw new Error('Failed to delete task');
-    return await res.json();
+export const deleteTask = async (id) => {
+    const tasks = await getTasks();
+    const updated = tasks.filter(t => t.id !== id);
+    localStorage.setItem(TASKS_KEY, JSON.stringify(updated));
 };
 
-export const updateTask = async (id, taskData) => {
-    const res = await fetch(`${BASE_URL}/tasks/${id}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(taskData)
-    });
-    if (!res.ok) throw new Error('Failed to update task');
-    return await res.json();
+export const toggleTask = async (id) => {
+    const tasks = await getTasks();
+    const updated = tasks.map(t =>
+        t.id === id ? { ...t, completed: !t.completed } : t
+    );
+    localStorage.setItem(TASKS_KEY, JSON.stringify(updated));
+    return updated.find(t => t.id === id);
 };
