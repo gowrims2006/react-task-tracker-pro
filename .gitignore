@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+=======
+>>>>>>> a0be0121304a419ef652b2bb898ebfab70c6ae80
 # dependencies
 /node_modules
 /.pnp
@@ -19,6 +24,10 @@
 # misc
 .DS_Store
 
+<<<<<<< HEAD
+npm-debug.log*
+yarn-debug.log*
+=======
 # logs
 logs
 *.log
@@ -26,3 +35,4 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+>>>>>>> a0be0121304a419ef652b2bb898ebfab70c6ae80
