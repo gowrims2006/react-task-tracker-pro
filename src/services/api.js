@@ -1,26 +1,23 @@
+import axios from 'axios'
 
-const BASE_URL = 'https://jsonplaceholder.typicode.com';
+const API_URL = 'http://localhost:3001/api/todos'
 
-export const getTasks = async () => {
-    const res = await fetch(`${BASE_URL}/todos?_limit=10`);
-    if (!res.ok) throw new Error('Failed to fetch tasks');
-    return await res.json();
-};
+export const getTodos = async () => {
+    const res = await axios.get(API_URL)
+    return res.data
+}
 
-export const createTask = async (taskData) => {
-    const res = await fetch(`${BASE_URL}/posts`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            title: taskData.title,
-            body: taskData.description || 'No description',
-            userId: 1,
-            completed: taskData.completed || false
-        })
-    });
+export const addTodos = async (title) => {
+    const res = await axios.post(API_URL, { title })
+    return res.data
+}
 
-    if (!res.ok) throw new Error('Failed to create task');
-    return await res.json();
-};
+export const toggleTodos = async (id, completed) => {
+    const res = await axios.put(`${API_URL}/${id}`, { completed })
+    return res.data
+}
+
+export const deleteTodos = async (id) => {
+    const res = await axios.delete(`${API_URL}/${id}`)
+    return res.data
+}
