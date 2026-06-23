@@ -31,7 +31,7 @@ function App() {
       })));
       setError('');
     } catch (err) {
-      setError('Failed to load tasks. Backend running aano?');
+      setError('Failed to load tasks?');
     } finally {
       setLoading(false);
     }
@@ -53,7 +53,7 @@ function App() {
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title.trim() })
+        body: JSON.stringify({ title: title })
       });
       const newTask = await response.json();
       setTasks([...tasks, {

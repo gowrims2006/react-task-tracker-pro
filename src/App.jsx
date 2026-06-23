@@ -1,122 +1,135 @@
-import { useState, useEffect } from 'react'
-import { getTodos, addTodos, toggleTodos, deleteTodos } from './services/api.js'
-import './App.css'
+import { useState, useEffect } from 'react';
+import './App.css';
 
 function App() {
-  const [tasks, setTasks] = useState([])
-  const [input, setInput] = useState('')
-  const [filter, setFilter] = useState('all')
-  const [darkMode, setDarkMode] = useState(false)
-  const [error, setError] = useState('')
-  const [showModal, setShowModal] = useState(false)
-  const [taskToDelete, setTaskToDelete] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [tasks, setTasks] = useState([]);
+  const [title, setTitle] = useState('');
+  const [error, setError] = useState('');
+  const [darkMode, setDarkMode] = useState(false);
+  const [filter, setFilter] = useState('all');
+  const [loading, setLoading] = useState(false);
 
-  // Backend ninnu data load cheyyuka + dark mode
+  // ✅ POPUP INU VENDI 2 STATE
+  const [showModal, setShowModal] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState(null);
+
+  const API_URL = 'http://localhost:3001/api/todos';
+
   useEffect(() => {
-    const savedTheme = localStorage.getItem('darkMode')
-    if (savedTheme) setDarkMode(JSON.parse(savedTheme))
-    fetchTasks() // ← Backend ninnu edukkuka
-  }, [])
+    loadTasks();
+  }, []);
 
-  // Dark mode toggle
-  useEffect(() => {
-    document.body.className = darkMode ? 'dark' : ''
-    localStorage.setItem('darkMode', JSON.stringify(darkMode))
-  }, [darkMode])
-
-  // BACKEND NINNU GET CHEYYUKA
-  const fetchTasks = async () => {
+  const loadTasks = async () => {
+    setLoading(true);
     try {
-      setLoading(true)
-      const data = await getTodos() // ← GET /api/todos
-      setTasks(data)
-      setError('')
+      const response = await fetch(API_URL);
+      const data = await response.json();
+      setTasks(data.map(t => ({
+        id: t._id,
+        title: t.title,
+        completed: t.completed || false
+      })));
+      setError('');
     } catch (err) {
-      setError('Server il ninnu tasks edukkana pattiyilla')
-      console.error('GET Error:', err)
+      setError('Failed to load tasks. Backend running aano?');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  // BACKEND ILEKK POST CHEYYUKA
-  const addTask = async () => {
-    if (input.trim() === '') {
-      setError('Please enter a task!')
-      return
+  const handleAdd = async () => {
+    if (!title.trim()) {
+      setError('Please enter a task!');
+      return;
     }
-    if (input.trim().length < 3) {
-      setError('Task must be at least 3 characters!')
-      return
+    if (title.trim().length < 3) {
+      setError('Task must be at least 3 characters!');
+      return;
     }
 
+    setLoading(true);
+    setError('');
     try {
-      await addTodos(input.trim()) // ← POST /api/todos
-      setError('')
-      setInput('')
-      fetchTasks() // ← Veendum GET cheythu update aakuka
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title.trim() })
+      });
+      const newTask = await response.json();
+      setTasks([...tasks, {
+        id: newTask._id,
+        title: newTask.title,
+        completed: newTask.completed
+      }]);
+      setTitle('');
     } catch (err) {
-      setError('unable to add task.')
-      console.error('POST Error:', err)
+      setError('Failed to add task. Try again!');
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
-  // BACKEND IL UPDATE CHEYYUKA
-  const toggleTask = async (id) => {
-    const task = tasks.find(t => t._id === id) // ← _id aanu MongoDB il
-    try {
-      await toggleTodos(id, !task.completed) // ← PUT /api/todos/:id
-      fetchTasks()
-    } catch (err) {
-      setError('unable to update')
-      console.error('PUT Error:', err)
-    }
-  }
-
+  // ✅ STEP 1: DELETE CLICK CHEYYUMBOL POPUP SHOW CHEYYIKKUM
   const handleDeleteClick = (id) => {
-    setTaskToDelete(id)
-    setShowModal(true)
-  }
+    setTaskToDelete(id);
+    setShowModal(true);
+  };
 
-  // BACKEND NINNU DELETE CHEYYUKA
+  // ✅ STEP 2: "YES DELETE" ADICHAL MATHRAM DELETE AAVUM
   const confirmDelete = async () => {
     try {
-      await deleteTodos(taskToDelete) // ← DELETE /api/todos/:id
-      setShowModal(false)
-      setTaskToDelete(null)
-      fetchTasks()
+      await fetch(`${API_URL}/${taskToDelete}`, {
+        method: 'DELETE'
+      });
+      setTasks(tasks.filter(task => task.id !== taskToDelete));
+      setShowModal(false);
+      setTaskToDelete(null);
     } catch (err) {
-      setError('unable to delete')
-      console.error('DELETE Error:', err)
+      setError('Failed to delete task');
+      setShowModal(false);
+      setTaskToDelete(null);
     }
-  }
+  };
 
+  // ✅ STEP 3: "NO CANCEL" ADICHAL POPUP CLOSE AAVUM
   const cancelDelete = () => {
-    setShowModal(false)
-    setTaskToDelete(null)
-  }
+    setShowModal(false);
+    setTaskToDelete(null);
+  };
 
-  const toggleTheme = () => {
-    setDarkMode(!darkMode)
-  }
+  const toggleTask = async (id) => {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+
+    try {
+      await fetch(`${API_URL}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed: !task.completed })
+      });
+      setTasks(tasks.map(t =>
+        t.id === id ? { ...t, completed: !t.completed } : t
+      ));
+    } catch (err) {
+      setError('Failed to update task');
+    }
+  };
+
+  const completed = tasks.filter(t => t.completed).length;
+  const pending = tasks.length - completed;
 
   const filteredTasks = tasks.filter(task => {
-    if (filter === 'completed') return task.completed
-    if (filter === 'pending') return !task.completed
-    return true
-  })
-
-  const totalTasks = tasks.length
-  const completedTasks = tasks.filter(t => t.completed).length
-  const pendingTasks = tasks.filter(t => !t.completed).length
+    if (filter === 'completed') return task.completed;
+    if (filter === 'pending') return !task.completed;
+    return true;
+  });
 
   return (
-    <div className="app">
+    <div className={darkMode ? 'app-dark' : 'app-light'}>
       <div className="container">
         <div className="header">
           <h1>Student Task Tracker 🚀</h1>
-          <button className="theme-toggle" onClick={toggleTheme}>
+          <button className="mode-btn" onClick={() => setDarkMode(!darkMode)}>
             {darkMode ? '☀️ Light' : '🌙 Dark'}
           </button>
         </div>
@@ -124,86 +137,95 @@ function App() {
         <div className="stats">
           <div className="stat-card">
             <p>Total Tasks</p>
-            <h2>{totalTasks}</h2>
+            <h2>{tasks.length}</h2>
           </div>
           <div className="stat-card">
             <p>Completed</p>
-            <h2>{completedTasks}</h2>
+            <h2>{completed}</h2>
           </div>
           <div className="stat-card">
             <p>Pending</p>
-            <h2>{pendingTasks}</h2>
+            <h2>{pending}</h2>
           </div>
         </div>
 
-        <div className="input-section">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && addTask()}
-            placeholder="Enter task"
-          />
-          <button onClick={addTask}>Add Task</button>
-        </div>
+        {error && <div className="error">{error}</div>}
 
-        {error && <p className="error-text">{error}</p>}
-        {loading && <p className="loading">Loading tasks from server...</p>}
+        <div className="input-group">
+          <input
+            value={title}
+            onChange={e => {
+              setTitle(e.target.value);
+              setError('');
+            }}
+            placeholder="Enter task"
+            onKeyPress={e => e.key === 'Enter' && handleAdd()}
+            disabled={loading}
+          />
+          <button className="add-btn" onClick={handleAdd} disabled={loading}>
+            {loading ? 'Adding...' : 'Add Task'}
+          </button>
+        </div>
 
         <div className="filters">
           <button
-            className={filter === 'all' ? 'active' : ''}
+            className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
             onClick={() => setFilter('all')}
           >
-            All ({totalTasks})
+            All ({tasks.length})
           </button>
           <button
-            className={filter === 'pending' ? 'active' : ''}
+            className={`filter-btn ${filter === 'pending' ? 'active' : ''}`}
             onClick={() => setFilter('pending')}
           >
-            Pending ({pendingTasks})
+            Pending ({pending})
           </button>
           <button
-            className={filter === 'completed' ? 'active' : ''}
+            className={`filter-btn ${filter === 'completed' ? 'active' : ''}`}
             onClick={() => setFilter('completed')}
           >
-            Completed ({completedTasks})
+            Completed ({completed})
           </button>
         </div>
 
         <div className="task-list">
-          {!loading && filteredTasks.length === 0 ? (
-            <p className="empty">No tasks found 🔍</p>
+          {loading && tasks.length === 0 ? (
+            <p className="empty">Loading tasks... ⏳</p>
+          ) : filteredTasks.length === 0 ? (
+            <p className="empty">No tasks found. Add one above! 🔍</p>
           ) : (
             filteredTasks.map(task => (
-              <div key={task._id} className={`task-item ${task.completed ? 'completed' : ''}`}>
+              <div key={task.id} className={`task-item ${task.completed ? 'done' : ''}`}>
                 <input
                   type="checkbox"
                   checked={task.completed}
-                  onChange={() => toggleTask(task._id)} // ← _id use cheyyuka
+                  onChange={() => toggleTask(task.id)}
                 />
-                <span>{task.title}</span> // ← title ennaanu backend il
-                <button onClick={() => handleDeleteClick(task._id)}>Delete</button>
+                <span>{task.title}</span>
+                <button className="delete-btn" onClick={() => handleDeleteClick(task.id)}>
+                  Delete
+                </button>
               </div>
             ))
           )}
         </div>
       </div>
 
+      {/* ✅ DELETE POPUP MODAL */}
       {showModal && (
         <div className="modal-overlay" onClick={cancelDelete}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>Confirm Delete</h3>
+            <h3>Warning</h3>
             <p>Are you sure you want to delete this task?</p>
             <div className="modal-buttons">
-              <button onClick={cancelDelete}>Cancel</button>
-              <button onClick={confirmDelete}>Delete</button>
+              <button onClick={cancelDelete} className="cancel-btn">No, Cancel</button>
+              <button onClick={confirmDelete} className="delete-confirm-btn">Yes, Delete</button>
             </div>
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
