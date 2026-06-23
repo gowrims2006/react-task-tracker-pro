@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getTodos, addTodos, toggleTodos, deleteTodos } from './api.js' // ← ITHU IMPORTANT
+import { getTodos, addTodos, toggleTodos, deleteTodos } from './services/api.js'
 import './App.css'
 
 function App() {
@@ -57,7 +57,7 @@ function App() {
       setInput('')
       fetchTasks() // ← Veendum GET cheythu update aakuka
     } catch (err) {
-      setError('Task add cheyyan pattiyilla. Server error')
+      setError('unable to add task.')
       console.error('POST Error:', err)
     }
   }
@@ -69,7 +69,7 @@ function App() {
       await toggleTodos(id, !task.completed) // ← PUT /api/todos/:id
       fetchTasks()
     } catch (err) {
-      setError('Update cheyyan pattiyilla')
+      setError('unable to update')
       console.error('PUT Error:', err)
     }
   }
@@ -87,7 +87,7 @@ function App() {
       setTaskToDelete(null)
       fetchTasks()
     } catch (err) {
-      setError('Delete cheyyan pattiyilla')
+      setError('unable to delete')
       console.error('DELETE Error:', err)
     }
   }
