@@ -13,7 +13,10 @@ function App() {
   const [showModal, setShowModal] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
 
-  const API_URL = 'http://localhost:3001/api/todos';
+  // ✅ FIX 1: ENV VARIABLE USE CHEYYU - LOCALHOST MAATTAM
+  const API_URL = process.env.REACT_APP_API_URL
+    ? `${process.env.REACT_APP_API_URL}/api/todos`
+    : 'http://localhost:3001/api/todos';
 
   useEffect(() => {
     loadTasks();
@@ -21,17 +24,18 @@ function App() {
 
   const loadTasks = async () => {
     setLoading(true);
+    setError(''); // ✅ FIX 2: FIRST LINE IL ERROR CLEAR CHEYYU
     try {
       const response = await fetch(API_URL);
+      if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();
       setTasks(data.map(t => ({
         id: t._id,
         title: t.title,
         completed: t.completed || false
       })));
-      setError('');
     } catch (err) {
-      setError('Failed to load tasks. Backend running aano?');
+      setError('Failed to load tasks. Check connection.');
     } finally {
       setLoading(false);
     }
@@ -55,11 +59,12 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: title })
       });
+      if (!response.ok) throw new Error('Failed to add');
       const newTask = await response.json();
       setTasks([...tasks, {
         id: newTask._id,
         title: newTask.title,
-        completed: newTask.completed
+        completed: newTask.completed || false
       }]);
       setTitle('');
     } catch (err) {
@@ -78,9 +83,10 @@ function App() {
   // ✅ STEP 2: "YES DELETE" ADICHAL MATHRAM DELETE AAVUM
   const confirmDelete = async () => {
     try {
-      await fetch(`${API_URL}/${taskToDelete}`, {
+      const response = await fetch(`${API_URL}/${taskToDelete}`, {
         method: 'DELETE'
       });
+      if (!response.ok) throw new Error('Failed to delete');
       setTasks(tasks.filter(task => task.id !== taskToDelete));
       setShowModal(false);
       setTaskToDelete(null);
@@ -102,11 +108,12 @@ function App() {
     if (!task) return;
 
     try {
-      await fetch(`${API_URL}/${id}`, {
+      const response = await fetch(`${API_URL}/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ completed: !task.completed })
       });
+      if (!response.ok) throw new Error('Failed to update');
       setTasks(tasks.map(t =>
         t.id === id ? { ...t, completed: !t.completed } : t
       ));
