@@ -8,13 +8,15 @@ export const useTasks = () => {
 
     const fetchTasks = async () => {
         try {
+            console.log('fetchTasks started');
             setLoading(true);
             setError('');
             const data = await getTasks();
+            console.log('Data from API:', data);
             setTasks(data);
         } catch (err) {
+            console.error('FETCH ERROR:', err);
             setError('Failed to load tasks. Check connection.');
-            console.error(err); // Debug nu vendi
         } finally {
             setLoading(false);
         }
@@ -32,14 +34,10 @@ export const useTasks = () => {
         }
     };
 
-    useEffect(() => {
-        fetchTasks();
-    }, []);
-
     const deleteTask = async (id) => {
         try {
             await deleteTaskApi(id);
-            setTasks(prev => prev.filter(task => task._id !== id)); // ← _id aaki maatti
+            setTasks(prev => prev.filter(task => task._id !== id)); // MongoDB _id
         } catch (err) {
             setError('Failed to delete task');
             console.error(err);
@@ -47,18 +45,23 @@ export const useTasks = () => {
     };
 
     const toggleComplete = async (id) => {
-        const task = tasks.find(t => t._id === id); // ← _id aaki maatti
+        const task = tasks.find(t => t._id === id); // MongoDB _id
         if (!task) return;
         try {
             const updated = await updateTask(id, { ...task, completed: !task.completed });
-            setTasks(prev => prev.map(task =>
-                task._id === id ? updated : task  // ← _id aaki maatti
+            setTasks(prev => prev.map(t =>
+                t._id === id ? updated : t // MongoDB _id
             ));
         } catch (err) {
             setError('Failed to update task');
             console.error(err);
         }
     };
+
+    useEffect(() => {
+        console.log('useTasks mounted, calling fetchTasks');
+        fetchTasks();
+    }, []);
 
     return {
         tasks,

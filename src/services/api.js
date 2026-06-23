@@ -3,6 +3,7 @@ import axios from 'axios'
 const API_URL = 'https://task-tracker-backend-1-nrzf.onrender.com' // ← /api/todos kalayuka
 
 export const getTodos = async () => {
+    console.log('Calling API:', `${API_URL}/api/todos`)
     const res = await axios.get(`${API_URL}/api/todos`) // ← ivide add cheyyu
     return res.data
 }
