@@ -13,9 +13,9 @@ function App() {
   const [showModal, setShowModal] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
 
-  // ✅ FIX 1: ENV VARIABLE USE CHEYYU - LOCALHOST MAATTAM
-  const API_URL = process.env.REACT_APP_API_URL
-    ? `${process.env.REACT_APP_API_URL}/api/todos`
+  // ✅ VITE FIX: process maatti import.meta.env aakki
+  const API_URL = import.meta.env.VITE_API_URL
+    ? `${import.meta.env.VITE_API_URL}/api/todos`
     : 'http://localhost:3001/api/todos';
 
   useEffect(() => {
