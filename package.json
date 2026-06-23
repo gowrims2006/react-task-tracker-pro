@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://GowriMS.github.io/react-task-tracker-pro",
+  "homepage": "https://gowrims2006.github.io/react-task-tracker-pro",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
