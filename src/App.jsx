@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { getTodos, addTodos, toggleTodos, deleteTodos } from './api.js' // ← ITHU IMPORTANT
 import './App.css'
 
 function App() {
@@ -9,30 +10,38 @@ function App() {
   const [error, setError] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [taskToDelete, setTaskToDelete] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  // Load from localStorage on start
+  // Backend ninnu data load cheyyuka + dark mode
   useEffect(() => {
     const savedTheme = localStorage.getItem('darkMode')
     if (savedTheme) setDarkMode(JSON.parse(savedTheme))
-
-    const savedTasks = localStorage.getItem('tasks')
-    if (savedTasks) {
-      setTasks(JSON.parse(savedTasks))
-    }
+    fetchTasks() // ← Backend ninnu edukkuka
   }, [])
 
-  // Save to localStorage when tasks change
+  // Dark mode toggle
   useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks))
-  }, [tasks])
-
-  // Toggle dark mode
-  useEffect(() => {
-    document.body.className = darkMode? 'dark' : ''
+    document.body.className = darkMode ? 'dark' : ''
     localStorage.setItem('darkMode', JSON.stringify(darkMode))
   }, [darkMode])
 
-  const addTask = () => {
+  // BACKEND NINNU GET CHEYYUKA
+  const fetchTasks = async () => {
+    try {
+      setLoading(true)
+      const data = await getTodos() // ← GET /api/todos
+      setTasks(data)
+      setError('')
+    } catch (err) {
+      setError('Server il ninnu tasks edukkana pattiyilla')
+      console.error('GET Error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // BACKEND ILEKK POST CHEYYUKA
+  const addTask = async () => {
     if (input.trim() === '') {
       setError('Please enter a task!')
       return
@@ -41,28 +50,28 @@ function App() {
       setError('Task must be at least 3 characters!')
       return
     }
-    const isDuplicate = tasks.some(task =>
-      task.text.toLowerCase() === input.trim().toLowerCase()
-    )
-    if (isDuplicate) {
-      setError('This task already exists!')
-      return
-    }
 
-    setError('')
-    const newTask = {
-      id: Date.now(),
-      text: input.trim(),
-      completed: false
+    try {
+      await addTodos(input.trim()) // ← POST /api/todos
+      setError('')
+      setInput('')
+      fetchTasks() // ← Veendum GET cheythu update aakuka
+    } catch (err) {
+      setError('Task add cheyyan pattiyilla. Server error')
+      console.error('POST Error:', err)
     }
-    setTasks([...tasks, newTask])
-    setInput('')
   }
 
-  const toggleTask = (id) => {
-    setTasks(tasks.map(t =>
-      t.id === id? {...t, completed:!t.completed } : t
-    ))
+  // BACKEND IL UPDATE CHEYYUKA
+  const toggleTask = async (id) => {
+    const task = tasks.find(t => t._id === id) // ← _id aanu MongoDB il
+    try {
+      await toggleTodos(id, !task.completed) // ← PUT /api/todos/:id
+      fetchTasks()
+    } catch (err) {
+      setError('Update cheyyan pattiyilla')
+      console.error('PUT Error:', err)
+    }
   }
 
   const handleDeleteClick = (id) => {
@@ -70,10 +79,17 @@ function App() {
     setShowModal(true)
   }
 
-  const confirmDelete = () => {
-    setTasks(tasks.filter(t => t.id!== taskToDelete))
-    setShowModal(false)
-    setTaskToDelete(null)
+  // BACKEND NINNU DELETE CHEYYUKA
+  const confirmDelete = async () => {
+    try {
+      await deleteTodos(taskToDelete) // ← DELETE /api/todos/:id
+      setShowModal(false)
+      setTaskToDelete(null)
+      fetchTasks()
+    } catch (err) {
+      setError('Delete cheyyan pattiyilla')
+      console.error('DELETE Error:', err)
+    }
   }
 
   const cancelDelete = () => {
@@ -87,13 +103,13 @@ function App() {
 
   const filteredTasks = tasks.filter(task => {
     if (filter === 'completed') return task.completed
-    if (filter === 'pending') return!task.completed
+    if (filter === 'pending') return !task.completed
     return true
   })
 
   const totalTasks = tasks.length
   const completedTasks = tasks.filter(t => t.completed).length
-  const pendingTasks = tasks.filter(t =>!t.completed).length
+  const pendingTasks = tasks.filter(t => !t.completed).length
 
   return (
     <div className="app">
@@ -101,7 +117,7 @@ function App() {
         <div className="header">
           <h1>Student Task Tracker 🚀</h1>
           <button className="theme-toggle" onClick={toggleTheme}>
-            {darkMode? '☀️ Light' : '🌙 Dark'}
+            {darkMode ? '☀️ Light' : '🌙 Dark'}
           </button>
         </div>
 
@@ -132,22 +148,23 @@ function App() {
         </div>
 
         {error && <p className="error-text">{error}</p>}
+        {loading && <p className="loading">Loading tasks from server...</p>}
 
         <div className="filters">
           <button
-            className={filter === 'all'? 'active' : ''}
+            className={filter === 'all' ? 'active' : ''}
             onClick={() => setFilter('all')}
           >
             All ({totalTasks})
           </button>
           <button
-            className={filter === 'pending'? 'active' : ''}
+            className={filter === 'pending' ? 'active' : ''}
             onClick={() => setFilter('pending')}
           >
             Pending ({pendingTasks})
           </button>
           <button
-            className={filter === 'completed'? 'active' : ''}
+            className={filter === 'completed' ? 'active' : ''}
             onClick={() => setFilter('completed')}
           >
             Completed ({completedTasks})
@@ -155,18 +172,18 @@ function App() {
         </div>
 
         <div className="task-list">
-          {filteredTasks.length === 0? (
+          {!loading && filteredTasks.length === 0 ? (
             <p className="empty">No tasks found 🔍</p>
           ) : (
             filteredTasks.map(task => (
-              <div key={task.id} className={`task-item ${task.completed? 'completed' : ''}`}>
+              <div key={task._id} className={`task-item ${task.completed ? 'completed' : ''}`}>
                 <input
                   type="checkbox"
                   checked={task.completed}
-                  onChange={() => toggleTask(task.id)}
+                  onChange={() => toggleTask(task._id)} // ← _id use cheyyuka
                 />
-                <span>{task.text}</span>
-                <button onClick={() => handleDeleteClick(task.id)}>Delete</button>
+                <span>{task.title}</span> // ← title ennaanu backend il
+                <button onClick={() => handleDeleteClick(task._id)}>Delete</button>
               </div>
             ))
           )}
