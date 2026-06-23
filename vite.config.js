@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/react-task-tracker-pro/', // ← Repo nte peru exact aayi idanam
+  base: '/react-task-tracker-pro/',
 })

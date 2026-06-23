@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 // Hardcode cheyyuka - env variable vendilla ippo
-const API_URL = 'https://task-tracker-backend-1-nrzf.onrender.com'
+const API_URL = 'https://task-tracker-backend-1-nrzf.onrender.com/api/todos'
 
 console.log('API_URL used:', API_URL) // Debug nu vendi
 
