@@ -13,35 +13,30 @@ function App() {
   const [showModal, setShowModal] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
 
-  // ✅ VITE FIX: process maatti import.meta.env aakki
-  const API_URL = import.meta.env.VITE_API_URL
-    ? `${import.meta.env.VITE_API_URL}/api/todos`
-    : 'http://localhost:3001/api/todos';
-
+  // ✅ LOCALSTORAGE NINNU LOAD CHEYYUKA
   useEffect(() => {
     loadTasks();
   }, []);
 
-  const loadTasks = async () => {
+  const loadTasks = () => {
     setLoading(true);
-    setError(''); // ✅ FIX 2: FIRST LINE IL ERROR CLEAR CHEYYU
+    setError('');
     try {
-      const response = await fetch(API_URL);
-      if (!response.ok) throw new Error('Network response was not ok');
-      const data = await response.json();
-      setTasks(data.map(t => ({
-        id: t._id,
-        title: t.title,
-        completed: t.completed || false
-      })));
+      const saved = localStorage.getItem('tasks');
+      setTasks(saved ? JSON.parse(saved) : []);
     } catch (err) {
-      setError('Failed to load tasks. Check connection.');
+      setError('Failed to load tasks');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAdd = async () => {
+  const saveTasks = (newTasks) => {
+    localStorage.setItem('tasks', JSON.stringify(newTasks));
+    setTasks(newTasks);
+  };
+
+  const handleAdd = () => {
     if (!title.trim()) {
       setError('Please enter a task!');
       return;
@@ -53,25 +48,17 @@ function App() {
 
     setLoading(true);
     setError('');
-    try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title })
-      });
-      if (!response.ok) throw new Error('Failed to add');
-      const newTask = await response.json();
-      setTasks([...tasks, {
-        id: newTask._id,
-        title: newTask.title,
-        completed: newTask.completed || false
-      }]);
-      setTitle('');
-    } catch (err) {
-      setError('Failed to add task. Try again!');
-    } finally {
-      setLoading(false);
-    }
+
+    const newTask = {
+      id: Date.now(),
+      title: title.trim(),
+      completed: false
+    };
+
+    const updatedTasks = [...tasks, newTask];
+    saveTasks(updatedTasks);
+    setTitle('');
+    setLoading(false);
   };
 
   // ✅ STEP 1: DELETE CLICK CHEYYUMBOL POPUP SHOW CHEYYIKKUM
@@ -81,20 +68,11 @@ function App() {
   };
 
   // ✅ STEP 2: "YES DELETE" ADICHAL MATHRAM DELETE AAVUM
-  const confirmDelete = async () => {
-    try {
-      const response = await fetch(`${API_URL}/${taskToDelete}`, {
-        method: 'DELETE'
-      });
-      if (!response.ok) throw new Error('Failed to delete');
-      setTasks(tasks.filter(task => task.id !== taskToDelete));
-      setShowModal(false);
-      setTaskToDelete(null);
-    } catch (err) {
-      setError('Failed to delete task');
-      setShowModal(false);
-      setTaskToDelete(null);
-    }
+  const confirmDelete = () => {
+    const updatedTasks = tasks.filter(task => task.id !== taskToDelete);
+    saveTasks(updatedTasks);
+    setShowModal(false);
+    setTaskToDelete(null);
   };
 
   // ✅ STEP 3: "NO CANCEL" ADICHAL POPUP CLOSE AAVUM
@@ -103,23 +81,11 @@ function App() {
     setTaskToDelete(null);
   };
 
-  const toggleTask = async (id) => {
-    const task = tasks.find(t => t.id === id);
-    if (!task) return;
-
-    try {
-      const response = await fetch(`${API_URL}/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed: !task.completed })
-      });
-      if (!response.ok) throw new Error('Failed to update');
-      setTasks(tasks.map(t =>
-        t.id === id ? { ...t, completed: !t.completed } : t
-      ));
-    } catch (err) {
-      setError('Failed to update task');
-    }
+  const toggleTask = (id) => {
+    const updatedTasks = tasks.map(t =>
+      t.id === id ? { ...t, completed: !t.completed } : t
+    );
+    saveTasks(updatedTasks);
   };
 
   const completed = tasks.filter(t => t.completed).length;
